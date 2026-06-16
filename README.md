@@ -1,4 +1,4 @@
-# Final Project — Neurotransmitter Architecture and Alzheimer's Disease Biomarkers
+# Final Project: Neurotransmitter Architecture and Alzheimer's Disease Biomarkers
 
 This repository contains the code developed for my final degree project, focused on the spatial relationship between normative neurotransmitter receptor/transporter density maps and neuroimaging biomarkers associated with Alzheimer's disease.
 
