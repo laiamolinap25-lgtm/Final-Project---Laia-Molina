@@ -1,0 +1,5 @@
+biomarker;negative;positive;total;percent_positive;percent_negative
+fdg;14;17;31;54,83870968;45,16129032
+t1t2;42;7;49;14,28571429;85,71428571
+thickness;12;7;19;36,84210526;63,15789474
+volume;14;27;41;65,85365854;34,14634146

@@ -1,0 +1,11 @@
+neurotransmitter,region_type,negative,positive,total,percent_positive,percent_negative
+ach,cortical,1.0,4.0,5.0,80.0,20.0
+ach,subcortical,1.0,4.0,5.0,80.0,20.0
+dopamine,cortical,22.0,0.0,22.0,0.0,100.0
+dopamine,subcortical,6.0,12.0,18.0,66.66666666666667,33.333333333333336
+gaba,cortical,0.0,7.0,7.0,100.0,0.0
+gaba,subcortical,4.0,0.0,4.0,0.0,100.0
+glutamate,cortical,3.0,2.0,5.0,40.0,60.0
+glutamate,subcortical,1.0,4.0,5.0,80.0,20.0
+serotonin,cortical,36.0,15.0,51.0,29.41176470588235,70.58823529411765
+serotonin,subcortical,8.0,10.0,18.0,55.55555555555556,44.44444444444444

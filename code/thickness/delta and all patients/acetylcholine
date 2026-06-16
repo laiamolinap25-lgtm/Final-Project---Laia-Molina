@@ -1,0 +1,97 @@
+import pandas as pd
+from scipy import stats
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import numpy as np
+
+df_control = pd.read_excel(r"C:\Users\laiam\OneDrive\Escritorio\Practicas Canada\neurotransmitters\data\adni_dkt_thick_con_Laia.xlsx")
+df_mci     = pd.read_excel(r"C:\Users\laiam\OneDrive\Escritorio\Practicas Canada\neurotransmitters\data\adni_dkt_thick_mci_Laia.xlsx")
+df_ad      = pd.read_excel(r"C:\Users\laiam\OneDrive\Escritorio\Practicas Canada\neurotransmitters\data\adni_dkt_thick_ad_Laia.xlsx")
+
+timepoint_to_months = {'bl': 0, 'm06': 6, 'm12': 12, 'm24': 24,
+                       'm36': 36, 'm48': 48, 'm60': 60, 'm72': 72,
+                       'm84': 84, 'm96': 96, 'm108': 108, 'm120': 120,
+                       'm132': 132, 'm144': 144}
+
+cols_ctx = [c for c in df_control.columns if c.endswith('thickavg')]
+
+def calc_delta_all(df, cols):
+    df = df.copy()
+    df['tp_months'] = df['timepoint'].map(timepoint_to_months)
+    df = df.sort_values('tp_months')
+
+    df_bl   = df.groupby('patient_id').first()[cols + ['tp_months']]
+    df_last = df.groupby('patient_id').last()[cols + ['tp_months']]
+
+    months_diff = (df_last['tp_months'] - df_bl['tp_months']).replace(0, float('nan'))
+    years_diff  = months_diff / 12
+
+    delta = (df_last[cols] - df_bl[cols]).div(years_diff, axis=0)
+    return delta
+
+delta_ctx = pd.concat([
+    calc_delta_all(df_control, cols_ctx),
+    calc_delta_all(df_mci,     cols_ctx),
+    calc_delta_all(df_ad,      cols_ctx)
+])
+
+mean_ctx = delta_ctx.mean()
+mean_ctx.index = 'ctx-' + mean_ctx.index.str.replace('_', '-').str.replace('-thickavg', '')
+
+df_rec = pd.read_csv(r"C:\Users\laiam\OneDrive\Escritorio\Practicas Canada\neurotransmitters\data\PET_parcellated\dkt\DKT_receptors_table_corticalandsubcortical.csv")
+
+df_rec_ctx = df_rec[df_rec['region'].str.startswith('ctx-', na=False)].set_index('region')
+
+
+common_ctx = df_rec_ctx.index.intersection(mean_ctx.index)
+print(f"Matched cortical: {len(common_ctx)}")
+
+receptor_cols = ['VAChT', 'M1', 'A4B2']
+color_ctx = '#253a6b'
+
+
+fig = make_subplots(rows=1, cols=3,
+                    shared_xaxes=True,
+                    shared_yaxes=True,
+                    subplot_titles=[f'{r} - Cortical' for r in receptor_cols])
+
+for col, receptor in enumerate(receptor_cols, start=1):
+    x = mean_ctx.loc[common_ctx].astype(float)
+    y = df_rec_ctx.loc[common_ctx, receptor].astype(float)
+    mask = x.notna() & y.notna()
+    x, y = x[mask], y[mask]
+    region_names = common_ctx[mask]
+
+    rho, _ = stats.spearmanr(x, y)
+
+    fig.add_trace(go.Scatter(
+        x=x, y=y,
+        mode='markers',
+        marker=dict(color=color_ctx, size=7, opacity=0.7),
+        text=region_names,
+        hovertemplate='<b>%{text}</b><br>Δ Thickness: %{x:.4f}<br>Receptor: %{y:.4f}<extra></extra>',
+        name=f'Cortical (n={mask.sum()})',
+        showlegend=(col == 1)
+    ), row=1, col=col)
+
+    m, b = np.polyfit(x, y, 1)
+    x_sorted = np.sort(x)
+    fig.add_trace(go.Scatter(
+        x=x_sorted, y=m * x_sorted + b,
+        mode='lines',
+        line=dict(color='green', width=1.5),
+        showlegend=False
+    ), row=1, col=col)
+
+    fig.update_xaxes(title_text='Δ Thickness (per year)', row=1, col=col)
+    fig.update_yaxes(title_text='z-score', row=1, col=col)
+
+    fig.layout.annotations[col - 1].text = f'{receptor} - Cortical  ρ={rho:.3f}'
+
+fig.update_layout(
+    title='Spearman ρ: Δ Thickness (per year) vs Receptor Density',
+    height=450, width=1200
+)
+
+fig.write_html('delta_thickness_ACh_cortical.html')
+fig.show()

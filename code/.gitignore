@@ -1,0 +1,58 @@
+# --- Python cache ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# --- Virtual environments ---
+.env
+.venv/
+venv/
+env/
+
+# --- API keys  ---
+.env.local
+secrets.py
+api_key.txt
+
+# --- Raw / sensitive data ---
+data/
+*.xlsx
+*.xls
+*.nii
+*.nii.gz
+
+# --- CSV files ---
+
+*.csv
+
+
+!all_correlations.csv
+!corrected p values - correlations.csv
+!corrected_p_values_correlations.csv
+
+!good_codes/
+!good_codes/**/*.csv
+
+# --- Pipeline outputs / reports ---
+
+llm_interpretation.md
+llm_heatmap_report.md
+*_interpretation.md
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+*.ipynb
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- IDEs ---
+.vscode/
+.idea/
+*.code-workspace
+
+# Temporary Excel lock files
+~$*.xlsx
+~$*.xls

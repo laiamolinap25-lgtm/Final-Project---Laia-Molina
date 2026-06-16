@@ -1,0 +1,6 @@
+neurotransmitter,negative,positive,total,percent_positive,percent_negative
+ach,2,8,10,80.0,20.0
+dopamine,28,12,40,30.0,70.0
+gaba,4,7,11,63.63636363636363,36.36363636363637
+glutamate,4,6,10,60.0,40.0
+serotonin,44,25,69,36.231884057971016,63.768115942028984

@@ -1,0 +1,171 @@
+image: python:3.11-slim
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .pip_cache/
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip_cache"
+  CODE_DIR: "code/codes_good"
+
+stages:
+  - lint
+  - test
+  - quality
+  - deploy
+
+.install_deps: &install_deps
+  before_script:
+    - pip install --quiet --upgrade pip
+    - pip install --quiet
+        flake8
+        mypy
+        pytest
+        pytest-cov
+        pandas
+        numpy
+        scipy
+        statsmodels
+        plotly
+        streamlit
+        ollama
+    # Make the code directory importable as a package root
+    - export PYTHONPATH="$CI_PROJECT_DIR/$CODE_DIR:$PYTHONPATH"
+
+
+lint:flake8:
+  stage: lint
+  <<: *install_deps
+  script:
+    - flake8 $CODE_DIR/
+        --max-line-length=100
+        --exclude=__pycache__,.venv
+  allow_failure: false
+
+lint:mypy:
+  stage: lint
+  <<: *install_deps
+  script:
+    - mypy $CODE_DIR/analysis.py $CODE_DIR/app.py
+        --ignore-missing-imports
+        --no-strict-optional
+  allow_failure: true
+
+
+test:unit:
+  stage: test
+  <<: *install_deps
+  script:
+    - pytest $CODE_DIR/tests/
+        --cov=$CODE_DIR
+        --cov-report=term-missing
+        --cov-report=xml:coverage.xml
+        --cov-report=html:coverage_html
+        -v
+        --tb=short
+  coverage: '/TOTAL.*\s+(\d+%)$/'
+  artifacts:
+    when: always
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    paths:
+      - coverage_html/
+      - coverage.xml
+    expire_in: 30 days
+
+
+quality:coverage-gate:
+  stage: quality
+  <<: *install_deps
+  script:
+    - |
+      COVERAGE=$(pytest $CODE_DIR/tests/ --cov=$CODE_DIR --cov-report=term-missing -q 2>&1 \
+                 | grep TOTAL | awk '{print $NF}' | tr -d '%')
+      echo "Coverage: ${COVERAGE}%"
+      if [ -z "$COVERAGE" ]; then
+        echo "ERROR: Could not parse coverage output."
+        exit 1
+      fi
+      if [ "$COVERAGE" -lt 80 ]; then
+        echo "FAIL: Coverage ${COVERAGE}% is below the 80% threshold."
+        exit 1
+      fi
+      echo "PASS: Coverage ${COVERAGE}% meets the threshold."
+  needs:
+    - test:unit
+
+
+.ssh_setup: &ssh_setup
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client rsync
+    - eval $(ssh-agent -s)
+    - echo "$DEPLOY_SSH_KEY" | ssh-add -
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - ssh-keyscan "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+deploy:staging:
+  stage: deploy
+  <<: *ssh_setup
+  script:
+    - |
+      rsync -avz --delete \
+        --exclude='.git' \
+        --exclude='__pycache__' \
+        --exclude='.venv' \
+        --exclude='coverage_html/' \
+        --exclude='*.pyc' \
+        . "$DEPLOY_USER@$DEPLOY_HOST:$STAGING_PATH"
+
+      ssh "$DEPLOY_USER@$DEPLOY_HOST" "
+        cd $STAGING_PATH &&
+        pip install --quiet -r requirements.txt &&
+        pkill -f 'streamlit run app.py' || true &&
+        nohup streamlit run $CODE_DIR/app.py \
+          --server.port=8502 \
+          --server.address=0.0.0.0 \
+          > streamlit_staging.log 2>&1 &
+        echo 'Staging deploy done — port 8502'
+      "
+  environment:
+    name: staging
+    url: http://$DEPLOY_HOST:8502
+  only:
+    - main
+  needs:
+    - quality:coverage-gate
+
+deploy:production:
+  stage: deploy
+  <<: *ssh_setup
+  script:
+    - |
+      rsync -avz --delete \
+        --exclude='.git' \
+        --exclude='__pycache__' \
+        --exclude='.venv' \
+        --exclude='coverage_html/' \
+        --exclude='*.pyc' \
+        . "$DEPLOY_USER@$DEPLOY_HOST:$PROD_PATH"
+
+      ssh "$DEPLOY_USER@$DEPLOY_HOST" "
+        cd $PROD_PATH &&
+        pip install --quiet -r requirements.txt &&
+        pkill -f 'streamlit run app.py' || true &&
+        nohup streamlit run $CODE_DIR/app.py \
+          --server.port=8501 \
+          --server.address=0.0.0.0 \
+          > streamlit_prod.log 2>&1 &
+        echo 'Production deploy done — port 8501'
+      "
+  environment:
+    name: production
+    url: http://$DEPLOY_HOST:8501
+  when: manual
+  only:
+    - main
+  needs:
+    - deploy:staging

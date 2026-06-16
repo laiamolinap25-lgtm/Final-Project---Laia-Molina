@@ -1,0 +1,8 @@
+biomarker;region_type;negative;positive;total;percent_positive;percent_negative
+fdg;cortical;14;6;20;30;70
+fdg;subcortical;0;11;11;100;0
+t1t2;cortical;24;2;26;7,692307692;92,30769231
+t1t2;subcortical;18;5;23;21,73913043;78,26086957
+thickness;cortical;12;7;19;36,84210526;63,15789474
+volume;cortical;12;13;25;52;48
+volume;subcortical;2;14;16;87,5;12,5
