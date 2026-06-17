@@ -18,10 +18,6 @@ from analysis import (
 )
 
 
-# ============================================================
-# parameters
-# ============================================================
-
 n_spins = 1000
 random_state = 42
 alpha = 0.05
@@ -48,9 +44,6 @@ output_file = (
 output_file.parent.mkdir(parents=True, exist_ok=True)
 
 
-# ============================================================
-# numeric helpers
-# ============================================================
 
 def to_numeric_series(series):
     """
@@ -70,11 +63,6 @@ def clean_boolean_series(series):
     return series.astype(str).str.strip().str.lower().isin(
         ["true", "1", "yes", "y"]
     )
-
-
-# ============================================================
-# loading helpers
-# ============================================================
 
 def find_existing_file(possible_files):
     for file_path in possible_files:
@@ -200,9 +188,6 @@ def load_coordinates(path):
     return coords
 
 
-# ============================================================
-# region helpers
-# ============================================================
 
 def get_hemisphere(region):
     region = str(region)
@@ -244,10 +229,6 @@ def to_standard_region_name(region):
 
     return region
 
-
-# ============================================================
-# data reconstruction
-# ============================================================
 
 def load_biomarker_groups(biomarker_cfg):
     df_con = read_file(
@@ -457,10 +438,6 @@ def prepare_common_data(receptor_series, biomarker_series, coords):
     return common_df
 
 
-# ============================================================
-# spin test
-# ============================================================
-
 def normalize_points_to_sphere(points):
     points = np.asarray(points, dtype=float)
 
@@ -582,10 +559,6 @@ def run_spin_for_row(row, coords):
 
     return compute_spin_test(common_df)
 
-
-# ============================================================
-# main
-# ============================================================
 
 def main():
     significant_file = find_existing_file(possible_significant_files)
