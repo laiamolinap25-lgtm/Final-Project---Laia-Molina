@@ -15,9 +15,7 @@ from config import (
     receptors_csv,
 )
 
-# ============================================================
-# PARAMETERS
-# ============================================================
+
 
 alpha = 0.05
 n_spins = 1000
@@ -27,10 +25,6 @@ dkt_dir = Path(receptors_csv).parent
 coords_file = dkt_dir / "dkt_cortical_coordinates.csv"
 results_file = r"C:\Users\laiam\OneDrive\Escritorio\Practicas Canada\neurotransmitters\data\PET_parcellated\dkt\results analysis\all_correlations.csv"
 
-
-# ============================================================
-# FILE / COLUMN HELPERS
-# ============================================================
 
 def read_file(path: str, fmt: str) -> pd.DataFrame:
     if fmt == "xlsx":
@@ -47,10 +41,6 @@ def get_cols(df: pd.DataFrame, cfg: dict) -> tuple:
     )
     return cols_ctx, cols_sub
 
-
-# ============================================================
-# BASELINE / DELTA
-# ============================================================
 
 def calc_delta(df: pd.DataFrame, cols: list) -> pd.DataFrame:
     """Delta per year = (last - first) / years"""
@@ -83,9 +73,7 @@ def calc_baseline(df: pd.DataFrame, cols: list) -> pd.DataFrame:
     return df.groupby("patient_id").first()[cols]
 
 
-# ============================================================
-# INDEX NORMALIZATION
-# ============================================================
+
 
 def normalize_ctx_index(mean_ctx: pd.Series, cfg: dict) -> pd.Series:
     mean_ctx = mean_ctx.copy()
@@ -104,10 +92,6 @@ def normalize_sub_index(mean_sub: pd.Series) -> pd.Series:
     }.get(x, x))
     return mean_sub
 
-
-# ============================================================
-# RECEPTOR TABLE
-# ============================================================
 
 def load_receptors(ctx_index_mode: str) -> tuple:
     df_rec = pd.read_csv(receptors_csv, sep=";", decimal=",")
@@ -144,9 +128,7 @@ def load_receptors(ctx_index_mode: str) -> tuple:
 
     return df_rec_ctx, df_rec_sub
 
-# ============================================================
-# REGION HELPERS (for spin test coordinates)
-# ============================================================
+
 
 def get_hemisphere(region):
     region = str(region)
@@ -168,11 +150,6 @@ def load_coordinates(path):
     for col in ["x", "y", "z"]:
         coords[col] = pd.to_numeric(coords[col], errors="coerce")
     return coords
-
-
-# ============================================================
-# SPIN TEST
-# ============================================================
 
 def normalize_points_to_sphere(points):
     points = np.asarray(points, dtype=float)
@@ -226,9 +203,6 @@ def compute_spin_pvalue(receptor_vals, biomarker_vals, region_names, coords, obs
     return float(p_spin)
 
 
-# ============================================================
-# BIOMARKER MEANS
-# ============================================================
 
 def build_biomarker_means(biomarker_cfg, correlation_type, cols_ctx, cols_sub, has_sub,
                           df_con, df_mci, df_ad):
@@ -267,10 +241,6 @@ def build_biomarker_means(biomarker_cfg, correlation_type, cols_ctx, cols_sub, h
     mean_sub = v_sub.mean() if v_sub is not None else None
     return mean_ctx, mean_sub
 
-
-# ============================================================
-# RAW CORRELATIONS (Spearman + spin for cortex), NO FDR yet
-# ============================================================
 
 def compute_raw_correlations(
     biomarker_name, biomarker_cfg, neurotransmitter_name,
@@ -346,10 +316,6 @@ def compute_raw_correlations(
     return records
 
 
-# ============================================================
-# FDR grouped by biomarker + correlation_type + region_type
-# ============================================================
-
 def apply_grouped_fdr(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df["pvalue_fdr"] = np.nan
@@ -371,10 +337,6 @@ def apply_grouped_fdr(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
-
-# ============================================================
-# ORCHESTRATION
-# ============================================================
 
 def run_full_pipeline(biomarkers, neurotransmitters,
                       correlation_types, biomarker_list, neurotransmitter_selection):
