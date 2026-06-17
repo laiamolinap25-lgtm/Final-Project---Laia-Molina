@@ -5,18 +5,34 @@ import nibabel as nib
 import streamlit as st
 import streamlit.components.v1 as components
 import matplotlib.pyplot as plt
+from pathlib import Path
 
-RESULTS_DIR = r"C:\Users\laiam\OneDrive\Escritorio\Practicas Canada\neurotransmitters\data\PET_parcellated\dkt\results analysis"
-PNG_DIR = r"C:\Users\laiam\OneDrive\Escritorio\Practicas Canada\neurotransmitters\data\PET_parcellated\dkt\receptor_maps_corticalandsubcortical\png"
-NIFTI_DIR = r"C:\Users\laiam\OneDrive\Escritorio\Practicas Canada\neurotransmitters\data\PET_parcellated\dkt\receptor_maps_corticalandsubcortical\nifti"
-RECEPTOR_TABLE_PATH = r"C:\Users\laiam\OneDrive\Escritorio\Practicas Canada\neurotransmitters\data\PET_parcellated\dkt\DKT_receptors_table_corticalandsubcortical.csv"
-ASSETS_DIR = r"C:\Users\laiam\OneDrive\Escritorio\Practicas Canada\neurotransmitters\assets"
-WORKFLOW_IMG = r"C:\Users\laiam\OneDrive\Escritorio\Practicas Canada\neurotransmitters\assets\tech-roadmap-svg.jpg"
-ALL_CORRELATIONS_PATH = r"C:\Users\laiam\OneDrive\Escritorio\Practicas Canada\neurotransmitters\code\all_correlations.csv"
-AD_CONTINUUM_IMG = r"C:\Users\laiam\OneDrive\Escritorio\Practicas Canada\neurotransmitters\assets\Captura de pantalla 2026-06-11 145900.png"
-SYNAPSE_IMG = r"C:\Users\laiam\OneDrive\Escritorio\Practicas Canada\neurotransmitters\assets\Captura de pantalla 2026-06-11 145958.png"
-ADNI_FIGURES_DIR = r"C:\Users\laiam\OneDrive\Escritorio\Practicas Canada\neurotransmitters\data\PET_parcellated\dkt\adni analysis"
-HEATMAP_DIR = r"C:\Users\laiam\OneDrive\Escritorio\Practicas Canada\neurotransmitters\code\html_correlation_heatmaps_significant"
+
+
+# PROJECT PATHS
+
+BASE_DIR = Path(__file__).resolve().parents[1]
+
+DATA_DIR = BASE_DIR / "data"
+DKT_DIR = DATA_DIR / "PET_parcellated" / "dkt"
+ASSETS_DIR = BASE_DIR / "assets"
+CODE_DIR = BASE_DIR / "code"
+
+RESULTS_DIR = DKT_DIR / "results analysis"
+PNG_DIR = DKT_DIR / "receptor_maps_corticalandsubcortical" / "png"
+NIFTI_DIR = DKT_DIR / "receptor_maps_corticalandsubcortical" / "nifti"
+
+RECEPTOR_TABLE_PATH = DKT_DIR / "DKT_receptors_table_corticalandsubcortical.csv"
+
+WORKFLOW_IMG = ASSETS_DIR / "tech-roadmap-svg.jpg"
+AD_CONTINUUM_IMG = ASSETS_DIR / "Captura de pantalla 2026-06-11 145900.png"
+SYNAPSE_IMG = ASSETS_DIR / "Captura de pantalla 2026-06-11 145958.png"
+
+ADNI_FIGURES_DIR = DKT_DIR / "adni analysis"
+HEATMAP_DIR = CODE_DIR / "html_correlation_heatmaps_significant"
+
+ALL_CORRELATIONS_PATH = CODE_DIR / "all_correlations.csv"
+
 FILES = {
     "all_correlations": "all_correlations.csv",
     "significant": "significant_correlations_with_direction.csv",
@@ -56,9 +72,8 @@ DIRECTION_COLORS = {
     "negative": COLORS["negative"],
 }
 
-# ============================================================
+
 # PAGE CONFIG
-# ============================================================
 
 st.set_page_config(
     page_title="Neurochemical Pattern Explorer",
@@ -66,9 +81,9 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ============================================================
+
 # CUSTOM CSS
-# ============================================================
+
 
 st.markdown(
     """
@@ -1270,9 +1285,7 @@ if page == "Density explorer":
                     "subcortical / other",
                 )
 
-                # ------------------------------------------------
-                # REGIONAL DENSITY LOOKUP
-                # ------------------------------------------------
+            
 
                 st.markdown("---")
                 st.subheader("Regional density lookup")
