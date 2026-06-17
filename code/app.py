@@ -1292,33 +1292,44 @@ if page == "Density explorer":
 
                 col_region, col_sort = st.columns([1.2, 1])
 
-                with col_region:
+                region_options = (
+                    density_df["region"]
+                    .dropna()
+                    .astype(str)
+                    .sort_values()
+                    .unique()
+                    .tolist()
+                )
+
+                if len(region_options) == 0:
+                    st.warning("No valid brain regions found for this receptor.")
+                else:
                     selected_region = st.selectbox(
                         "Select brain region",
-                        sorted(density_df["region"].astype(str).unique()),
+                        region_options,
                         key="density_selected_region",
                     )
 
-                selected_row = density_df[
-                    density_df["region"].astype(str) == selected_region
-                ]
+                    selected_row = density_df[
+                        density_df["region"].astype(str) == selected_region
+                    ]
 
-                if not selected_row.empty:
-                    selected_density = selected_row["density_z_score"].iloc[0]
-                    selected_region_type = selected_row["region_type"].iloc[0]
+                    if not selected_row.empty:
+                        selected_density = selected_row["density_z_score"].iloc[0]
+                        selected_region_type = selected_row["region_type"].iloc[0]
 
-                    st.markdown(
-                        f"""
-                        <div class="info-card">
-                            <h3>Selected regional density</h3>
-                            <p><b>Receptor / transporter:</b> {selected_receptor}</p>
-                            <p><b>Region:</b> {selected_region}</p>
-                            <p><b>Region type:</b> {selected_region_type}</p>
-                            <p><b>Density z-score:</b> {selected_density:.4f}</p>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
+                        st.markdown(
+                            f"""
+                            <div class="info-card">
+                                <h3>Selected regional density</h3>
+                                <p><b>Receptor / transporter:</b> {selected_receptor}</p>
+                                <p><b>Region:</b> {selected_region}</p>
+                                <p><b>Region type:</b> {selected_region_type}</p>
+                                <p><b>Density z-score:</b> {selected_density:.4f}</p>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
 
                 # ------------------------------------------------
                 # VISUALIZATION
