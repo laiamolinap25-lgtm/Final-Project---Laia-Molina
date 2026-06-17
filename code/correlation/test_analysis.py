@@ -106,3 +106,92 @@ def test_points_projected_to_unit_sphere():
     sphere = normalize_points_to_sphere(pts)
     norms = np.linalg.norm(sphere, axis=1)
     assert np.allclose(norms, 1.0)
+
+
+import pandas as pd
+import pytest
+
+analysis = pytest.importorskip(
+    "analysis",
+    reason="analysis.py could not be imported (check dependencies like brainspace).",
+)
+
+apply_grouped_fdr = analysis.apply_grouped_fdr
+
+
+def _make_df(rows):
+    return pd.DataFrame(rows)
+
+
+def test_cortical_uses_p_spin_column():
+    df = _make_df([
+        {"biomarker": "fdg", "correlation_type": "baseline_all",
+         "region_type": "cortical", "pvalue": 0.9, "p_spin": 0.001},
+        {"biomarker": "fdg", "correlation_type": "baseline_all",
+         "region_type": "cortical", "pvalue": 0.9, "p_spin": 0.8},
+    ])
+    result = apply_grouped_fdr(df)
+    assert result.loc[0, "sig_fdr"] == True
+    assert result.loc[1, "sig_fdr"] == False
+
+
+def test_subcortical_uses_pvalue_column():
+    df = _make_df([
+        {"biomarker": "fdg", "correlation_type": "baseline_all",
+         "region_type": "subcortical", "pvalue": 0.001, "p_spin": np.nan},
+        {"biomarker": "fdg", "correlation_type": "baseline_all",
+         "region_type": "subcortical", "pvalue": 0.8, "p_spin": np.nan},
+    ])
+    result = apply_grouped_fdr(df)
+    assert result.loc[0, "sig_fdr"] == True
+    assert result.loc[1, "sig_fdr"] == False
+
+
+def test_groups_are_independent():
+    rows = []
+    rows.append({"biomarker": "fdg", "correlation_type": "baseline_all",
+                 "region_type": "cortical", "pvalue": 0.04, "p_spin": 0.04})
+    group_b_pvals = [0.04, 0.9, 0.9, 0.9, 0.9]
+    for p in group_b_pvals:
+        rows.append({"biomarker": "t1t2", "correlation_type": "baseline_all",
+                     "region_type": "cortical", "pvalue": p, "p_spin": p})
+    df = _make_df(rows)
+    result = apply_grouped_fdr(df)
+    group_a_q = result.loc[0, "pvalue_fdr"]
+    group_b_q = result.loc[1, "pvalue_fdr"]
+    print(f"group_a_q={group_a_q}, group_b_q={group_b_q}")
+    assert group_a_q != pytest.approx(group_b_q)
+
+
+def test_no_global_correction_across_region_types():
+    df = _make_df([
+        {"biomarker": "fdg", "correlation_type": "baseline_all",
+         "region_type": "cortical", "pvalue": 0.9, "p_spin": 0.0005},
+        {"biomarker": "fdg", "correlation_type": "baseline_all",
+         "region_type": "subcortical", "pvalue": 0.5, "p_spin": np.nan},
+    ])
+    result = apply_grouped_fdr(df)
+    print(f"row0 q={result.loc[0, 'pvalue_fdr']}, row1 q={result.loc[1, 'pvalue_fdr']}")
+    assert result.loc[0, "pvalue_fdr"] == pytest.approx(0.0005)
+    assert result.loc[1, "pvalue_fdr"] == pytest.approx(0.5)
+
+
+def test_nan_pvalues_are_skipped():
+    df = _make_df([
+        {"biomarker": "fdg", "correlation_type": "baseline_all",
+         "region_type": "cortical", "pvalue": 0.9, "p_spin": np.nan},
+    ])
+    result = apply_grouped_fdr(df)
+    assert pd.isna(result.loc[0, "pvalue_fdr"])
+    assert result.loc[0, "sig_fdr"] == False
+
+
+def test_empty_dataframe_does_not_crash():
+    df = _make_df([])
+    df["biomarker"] = []
+    df["correlation_type"] = []
+    df["region_type"] = []
+    df["pvalue"] = []
+    df["p_spin"] = []
+    result = apply_grouped_fdr(df)
+    assert result.empty
