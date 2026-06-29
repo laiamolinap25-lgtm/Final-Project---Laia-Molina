@@ -1108,21 +1108,7 @@ if page == "Understand the data":
         else:
             st.dataframe(fallback_receptor_table(), use_container_width=True)
 
-        st.markdown("### Receptor density descriptive summary")
-
-        if nt_receptor_summary is not None:
-            st.dataframe(nt_receptor_summary, use_container_width=True)
-        else:
-            st.warning(
-                "Receptor density summary table not found. "
-                "Expected file: nt_receptor_descriptive_summary.csv"
-            )
-
-        st.caption(
-            "Density values correspond to z-scored regional receptor density values. "
-            "This section summarizes the input neurochemical maps; detailed receptor-by-receptor "
-            "inspection is available in the Density explorer."
-        )
+    
 
     # ========================================================
     # ADNI DATA
